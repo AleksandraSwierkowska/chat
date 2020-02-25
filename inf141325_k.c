@@ -17,11 +17,11 @@ int main(){
     int ipc = msgget(1024, 0666 | IPC_CREAT);
     id = log_in(ipc);
     int ipcMSG = msgget(1024+id, 0666 | IPC_CREAT);
+    int ipcGet = msgget(1024+2*id, 0666 | IPC_CREAT);
     int f = fork();
-    if (f == 0){
+    if (f != 0){
         clientRequest clientRequest1 = {5};
         while(1){
-            fflush(stdin);
             printf("%s", "Co chcesz zrobić teraz?\n 1 - napisz wiadomość do użytkownika \n");
             scanf("%d", &request);
             switch (request){
@@ -46,7 +46,15 @@ int main(){
             }
         }
     }
-    else{}
+    else{
+        while(1){
+            msg msg1 = {};
+            msgrcv(ipcGet, &msg1, sizeof(msg1) - sizeof(long), 6, 0);
+            printf("%s", msg1.receiver);
+            printf("%s", " napisał/a:\n");
+            printf("%s \n", msg1.msg);
+        }
+    }
     return 0;
 
 }

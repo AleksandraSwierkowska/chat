@@ -51,6 +51,7 @@ int main() {
         }
         if (f == 0){
             int ipcMSG = msgget(1024 + userID, 0666 | IPC_CREAT);
+            int ipcGet = msgget(1024 + 2*userID, 0666 | IPC_CREAT);
             clientRequest clientRequest1 = {};
             while(1) {
                 msgrcv(ipcMSG, &clientRequest1, sizeof(clientRequest1) - sizeof(long), 5, 0);
@@ -288,8 +289,9 @@ void sendMessage(user* users, int ipcMSG, int n){
         }
     }
     if (alright){
-        strcpy(msg1.receiver, users[ipcMSG - 1025].login);
-        msgsnd(1024 + id, &msg1, sizeof(msg1) - sizeof(long), 0);
+        //strcpy(msg1.receiver, users[ipcMSG - 1025].login);
+        printf("%s", "WYSYŁAM");
+        msgsnd(1024 + 2*id, &msg1, sizeof(msg1) - sizeof(long), 0);
         error1.mtype = 3;
         error1.error = 0;
         msgsnd(ipcMSG, &error1, sizeof(error1) - sizeof(long), 0);
