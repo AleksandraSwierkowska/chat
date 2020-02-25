@@ -16,8 +16,8 @@ int main(){
     int request;
     int ipc = msgget(1024, 0666 | IPC_CREAT);
     id = log_in(ipc);
-    int ipcMSG = msgget(1024+id, 0666 | IPC_CREAT);
-    int ipcGet = msgget(1024+2*id, 0666 | IPC_CREAT);
+    int ipcMSG = msgget(1024+2*id, 0666 | IPC_CREAT);
+    int ipcGet = msgget(1025+2*id, 0666 | IPC_CREAT);
     int f = fork();
     if (f != 0){
         clientRequest clientRequest1 = {5};

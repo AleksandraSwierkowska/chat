@@ -50,13 +50,14 @@ int main() {
             f = fork();
         }
         if (f == 0){
-            int ipcMSG = msgget(1024 + userID, 0666 | IPC_CREAT);
-            int ipcGet = msgget(1024 + 2*userID, 0666 | IPC_CREAT);
+            int ipcMSG = msgget(1024 + 2*userID, 0666 | IPC_CREAT);
+            int ipcGet = msgget(1025 + 2*userID, 0666 | IPC_CREAT);
             clientRequest clientRequest1 = {};
             while(1) {
                 msgrcv(ipcMSG, &clientRequest1, sizeof(clientRequest1) - sizeof(long), 5, 0);
                 switch (clientRequest1.request){
                     case 1: //send to user
+                        printf("%s", "senfdsfd");
                         sendMessage(users, ipcMSG, n);
                         break;
                     case 2: //send to group
@@ -259,6 +260,7 @@ int log_in(user* users, group* group, int n){
 }
 
 void sendMessage(user* users, int ipcMSG, int n){
+    printf("%s", "Wdadsa");
     msg msg1 = {};
     error error1 = {};
     int id = 0;
@@ -266,6 +268,7 @@ void sendMessage(user* users, int ipcMSG, int n){
     memset(msg1.msg, 0, 248);
     memset(msg1.receiver, 0, 30);
     msgrcv(ipcMSG, &msg1, sizeof(msg1) - sizeof(long), 6, 0);
+    printf("%s", "WYSYŁAM1");
     for (int i = 0; i < n; i++){
         if (strcmp(users[i].login, msg1.receiver) == 0){
             id = users[i].id;
@@ -279,7 +282,7 @@ void sendMessage(user* users, int ipcMSG, int n){
     }
     else{
         for (int i = 0; i < sizeof(users[id-1].blocked)/sizeof(users[id-1].blocked[0]); i++){
-            if (users[id-1].blocked[i] == ipcMSG - 1024){
+            if (users[id-1].blocked[i] == (ipcMSG - 1024)/2){
                 error1.mtype = 3;
                 error1.error = 5;
                 msgsnd(ipcMSG, &error1, sizeof(error1) - sizeof(long), 0);
@@ -289,9 +292,9 @@ void sendMessage(user* users, int ipcMSG, int n){
         }
     }
     if (alright){
-        //strcpy(msg1.receiver, users[ipcMSG - 1025].login);
-        printf("%s", "WYSYŁAM");
-        msgsnd(1024 + 2*id, &msg1, sizeof(msg1) - sizeof(long), 0);
+
+        printf("%s", "WYSYŁAM2");
+        msgsnd(1025 + 2*id, &msg1, sizeof(msg1) - sizeof(long), 0);
         error1.mtype = 3;
         error1.error = 0;
         msgsnd(ipcMSG, &error1, sizeof(error1) - sizeof(long), 0);
