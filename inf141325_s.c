@@ -6,7 +6,7 @@
 #include<fcntl.h>
 #include<string.h>
 #include<unistd.h>
-#include "structures.h"
+#include "inf141325_structures.h"
 #include<sys/shm.h>
 #include<sys/sem.h>
 #include <signal.h>
@@ -20,7 +20,7 @@ void createStructures(user *, group *, int *n, int *m);
 
 void sendMessage(user *, int ipcMSG, int n);
 
-void sendMessageToGroup(group *, user *, int ipcMSG, int m, int n);
+void sendMessageToGroup(group *groups, user *users, int ipcMSG, int m);
 
 void showGroups(group *, int ipcMSG, int m);
 
@@ -38,7 +38,7 @@ void blockGroup(group *, user *, int ipcMSG, int m, int n);
 
 int log_in(user *, group *, int n);
 
-void log_out(int ipcMsg, int ipcGet);
+void log_out(int ipcMsg, int ipcGet, user*, int n);
 
 void changeSignal();
 
@@ -89,7 +89,7 @@ int main() {
                         sendMessage(users, ipcMSG, n);
                         break;
                     case 2: //send to group
-                        sendMessageToGroup(groups, users, ipcMSG, m, n);
+                        sendMessageToGroup(groups, users, ipcMSG, m);
                         break;
                     case 3: //show groups
                         showGroups(groups, ipcMSG, m);
@@ -112,8 +112,8 @@ int main() {
                     case 9: //block a group
                         blockGroup(groups, users, ipcMSG, m, n);
                         break;
-                    case 10:
-                        log_out(ipcMSG, ipcGet);
+                    case 10: //log out
+                        log_out(ipcMSG, ipcGet, users, n);
                         break;
                 }
             }
@@ -179,6 +179,7 @@ void createStructures(user *users, group *groups, int *n, int *m) {
         }
 
     }
+    printf("%s", "Utworzono grupy i użytkowników\n");
 }
 
 user createUser(const char *userData, int k) {
@@ -256,10 +257,11 @@ int log_in(user *users, group *group, int n) {
     while (1) {
         userNotLogged = 1;
         msgrcv(ipc, &get_login, sizeof(send_login) - sizeof(long), 1, 0);
-        printf("%s\n", get_login.login);
+        printf("%s próbuje się zalogować\n", get_login.login);
         for (int i = 0; i < n; i++) {
             if (strcmp(users[i].login, get_login.login) == 0) {
                 if (users[i].active == 1){
+                    printf("Użytkownik jest już zalogowany \n");
                     error error = {3, 4};
                     msgsnd(ipc, &error, sizeof(error) - sizeof(long), 0);
                     userNotLogged = 0;
@@ -272,6 +274,7 @@ int log_in(user *users, group *group, int n) {
         }
         if(userNotLogged) {
             if (id == 0) {
+                printf("Podano nieprawidłowy login \n");
                 error error = {3, 1};
                 msgsnd(ipc, &error, sizeof(error) - sizeof(long), 0);
                 continue;
@@ -294,9 +297,11 @@ int log_in(user *users, group *group, int n) {
                     send_id.id = id;
                     msgsnd(ipc, &send_id, sizeof(send_id) - sizeof(long), 0);
                     semop(susers, &sOpen, 1);
+                    printf("Zalogowano użytkownika \n");
                     break;
                 } else {
                     users[id - 1].loggingTries++;
+                    printf("Nieprawidłowe hasło. To była %d próba logowania. \n", users[id-1].loggingTries);
                     error.error = 2;
                     msgsnd(ipc, &error, sizeof(error) - sizeof(long), 0);
 
@@ -309,6 +314,7 @@ int log_in(user *users, group *group, int n) {
 }
 
 void sendMessage(user *users, int ipcMSG, int n) {
+    printf("Próba wysłania wiadomości. \n");
     msg msg1 = {};
     error error1 = {};
     error1.mtype = 3;
@@ -324,12 +330,14 @@ void sendMessage(user *users, int ipcMSG, int n) {
     }
     semop(susers, &sClose, 1);
     if (users[id - 1].active == 0) {
+        printf("Odbiorca wiadomości jest nieaktywny \n");
         error1.error = 4;
         msgsnd(ipcMSG, &error1, sizeof(error1) - sizeof(long), 0);
         alright = 0;
     } else {
         for (int i = 0; i < users[id - 1].nrBlocked; i++) {
             if (users[id - 1].blocked[i] == msg1.sender) {
+                printf("Odbiorca wiadomości zablokował nadawcę \n");
                 error1.error = 5;
                 msgsnd(ipcMSG, &error1, sizeof(error1) - sizeof(long), 0);
                 alright = 0;
@@ -344,11 +352,13 @@ void sendMessage(user *users, int ipcMSG, int n) {
         msgsnd(sendThere, &msg1, sizeof(msg1) - sizeof(long), 0);
         error1.error = 0;
         msgsnd(ipcMSG, &error1, sizeof(error1) - sizeof(long), 0);
+        printf("Wiadomość wysłana \n");
     }
     semop(susers, &sOpen, 1);
 }
 
-void sendMessageToGroup(group *groups, user *users, int ipcMSG, int m, int n) {
+void sendMessageToGroup(group *groups, user *users, int ipcMSG, int m) {
+    printf("Próba wysłania wiadomości do grupy. \n");
     msg msg1 = {};
     int id = 0;
     int alright = 1;
@@ -362,6 +372,7 @@ void sendMessageToGroup(group *groups, user *users, int ipcMSG, int m, int n) {
     }
     semop(sgroups, &sClose, 1);
     semop(susers, &sClose, 1);
+    printf("Wysyłanie do każdego użytkownika, który jest aktywny i nie zablokował grupy \n");
     for (int i = 0; i < groups[id - 1].nrOfUsers; i++) {
         int receiverID = groups[id - 1].listOfUsers[i];
         if (users[receiverID - 1].active == 0) {
@@ -388,6 +399,7 @@ void sendMessageToGroup(group *groups, user *users, int ipcMSG, int m, int n) {
 }
 
 void showGroups(group *groups, int ipcMSG, int m) {
+    printf("Wysyła nazwę każdej grupy \n");
     sysMSG sysMsg = {};
     for (int i = 0; i < m; i++) {
         strcpy(sysMsg.all[i], groups[i].name);
@@ -398,6 +410,7 @@ void showGroups(group *groups, int ipcMSG, int m) {
 }
 
 void showUsersInGroup(group *groups, user *users, int ipcMSG, int m) {
+    printf("Wyświetla osoby należące do danej grupy \n");
     sysMSG sysMsg = {};
     text text1 = {};
     error error1 = {3, 1};
@@ -427,6 +440,7 @@ void showUsersInGroup(group *groups, user *users, int ipcMSG, int m) {
 }
 
 void showActiveUsers(user *users, int ipcMSG, int n) {
+    printf("Wyświetla aktywnych użytkowników\n");
     sysMSG sysMsg = {};
     sysMsg.nr = 0;
     sysMsg.mtype = 7;
@@ -447,18 +461,21 @@ void joinGroup(group *groups, int ipcMSG, int m) {
     error error1 = {3, 1};
     msgrcv(ipcMSG, &text1, sizeof(text1) - sizeof(long), 8, 0);
     msgrcv(ipcMSG, &id1, sizeof(id1) - sizeof(long), 4, 0);
+    printf("Próba dołączenia do grupy %s \n", text1.name);
     semop(sgroups, &sClose, 1);
     for (int i = 0; i < m; i++) {
         if (strcmp(text1.name, groups[i].name) == 0) {
             error1.error = 0;
             for (int k = 0; k < groups[i].nrOfUsers; k++) {
                 if (groups[i].listOfUsers[k] == id1.id) {
+                    printf("Dany użytkownik już należy do tej grupy \n");
                     error1.error = 2;
                     break;
                 }
 
             }
             if (error1.error == 0) {
+                printf("Udało się dołączyć do grupy %s \n", text1.name);
                 groups[i].listOfUsers[groups[i].nrOfUsers] = id1.id;
                 groups[i].nrOfUsers++;
             }
@@ -474,6 +491,7 @@ void leaveGroup(group *groups, int ipcMSG, int m) {
     id id1 = {};
     text text1 = {};
     int newList[25];
+    printf("Próba wyjścia z grupy %s, sprawdzanie, czy grupa istnieje i czy użytkownik do niej należy\n", text1.name);
     error error1 = {3, 2};
     msgrcv(ipcMSG, &text1, sizeof(text1) - sizeof(long), 8, 0);
     msgrcv(ipcMSG, &id1, sizeof(id1) - sizeof(long), 4, 0);
@@ -509,7 +527,7 @@ void blockUser(user *users, int ipcMSG, int n) {
     error error1 = {3, 1};
     msgrcv(ipcMSG, &id1, sizeof(id1) - sizeof(long), 4, 0);
     msgrcv(ipcMSG, &text1, sizeof(text1) - sizeof(long), 8, 0);
-
+    printf("Blokowanie użytkownika %s, jeśli nie jest już zablokowany i istnieje. \n", text1.name);
     for (int i = 0; i < n; i++) {
         if (strcmp(users[i].login, text1.name) == 0) {
             idToBlock = users[i].id;
@@ -552,6 +570,7 @@ void blockGroup(group *groups, user *users, int ipcMSG, int m, int n) {
     error error1 = {3, 1};
     msgrcv(ipcMSG, &id1, sizeof(id1) - sizeof(long), 4, 0);
     msgrcv(ipcMSG, &text1, sizeof(text1) - sizeof(long), 8, 0);
+    printf("Blokowanie grupy %s, jeśli nie jest już zablokowana i istnieje. \n", text1.name);
     for (int i = 0; i < m; i++) {
         if (strcmp(groups[i].name, text1.name) == 0) {
             idToBlock = groups[i].id;
@@ -580,7 +599,17 @@ void blockGroup(group *groups, user *users, int ipcMSG, int m, int n) {
     semop(susers, &sOpen, 1);
 }
 
-void log_out(int ipcMsg, int ipcGet) {
+void log_out(int ipcMsg, int ipcGet, user* users, int n) {
+    printf("Trwa wylogowywanie użytkownika\n");
+    id id1 = {};
+    msgrcv(ipcMsg, &id1, sizeof(id1) - sizeof(long), 4, 0);
+    semop(susers, &sClose, 1);
+    for (int i = 0; i < n; i++){
+        if (users[i].id == id1.id){
+            users->active = 0;
+        }
+    }
+    semop(susers, &sOpen, 1);
     error error1 = {};
     error1.mtype = 3;
     msgsnd(ipcMsg, &error1, sizeof(error1) - sizeof(long), 0);
@@ -593,6 +622,7 @@ void log_out(int ipcMsg, int ipcGet) {
 }
 
 void changeSignal() {
+    printf("Sygnał ctrl-C, zamykanie programu. \n");
     msgctl(ipc, IPC_RMID, 0);
     shmctl(shmidusers, IPC_RMID, 0);
     semctl(susers, 1, IPC_RMID, 0);

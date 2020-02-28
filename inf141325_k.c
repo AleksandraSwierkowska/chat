@@ -6,7 +6,7 @@
 #include<string.h>
 #include<unistd.h>
 #include <signal.h>
-#include "structures.h"
+#include "inf141325_structures.h"
 
 int log_in(int ipc);
 void log_out();
@@ -18,10 +18,10 @@ int ipcGet;
 
 int main(){
     signal(SIGINT, changeSignal);
-    int id = -1;
     int request;
     ipc = msgget(1024, 0600 | IPC_CREAT);
     while(1) {
+        int id = -1;
         while (id == - 1) {
             id = log_in(ipc);
         }
@@ -201,6 +201,9 @@ int main(){
                         break;
 
                     case 10:
+                        id1.mtype = 4;
+                        id1.id = id;
+                        msgsnd(ipcMSG, &id1, sizeof(id1) - sizeof(long), 0);
                         log_out();
                         userActive = 0;
                         break;

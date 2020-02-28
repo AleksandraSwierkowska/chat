@@ -2,8 +2,8 @@
 // Created by ola on 03.01.2020.
 //
 
-#ifndef WSPOLBIEZNE_STRUCTURES_H
-#define WSPOLBIEZNE_STRUCTURES_H
+#ifndef WSPOLBIEZNE_INF141325_STRUCTURES_H
+#define WSPOLBIEZNE_INF141325_STRUCTURES_H
 typedef struct send_login{
     long mtype;
     char login[30];
@@ -51,7 +51,6 @@ typedef struct user {
     int nrBlockedGroups;
     int loggingTries;
 } user;
-//temporary users in groups are static - u can implement sth or not
 typedef struct group {
     int id;
     char name[30];

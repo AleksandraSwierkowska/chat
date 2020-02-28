@@ -3,4 +3,4 @@ project(wspolbiezne C)
 
 set(CMAKE_C_STANDARD 11)
 
-add_executable(wspolbiezne structures.h inf141325_s.c inf141325_k.c)
+add_executable(wspolbiezne inf141325_structures.h inf141325_s.c inf141325_k.c)

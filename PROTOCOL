@@ -1,0 +1,21 @@
+Komunikacja odbywa się za pomocą kolejek komunikatów.
+Kolejki ipcMSG, która odpowiada za przekazywanie komunikatów do serwera oraz zwracanie przez serwer informacji (głównie errorów) do klienta.
+Kolejki ipcGet, która odpowiada za przesyłanie wiadomości z serwera do danego użytkownika.
+Kolejki ipc, która służy do logowania użytkowników.
+
+Serwer składa się z procesów, głównego - ciągle czekającego na logowanie użytkowników oraz pozostały, z których każdy spełnia żądania jakiegoś użytkownika. Procesy te korzystają ze struktur user i group umieszczonych odpowiednio
+w tablicach users i groups znajdujących się w pamięci współdzielonej przez te procesy. Program serwer wykorzystuje również dwa semafory, jeden (susers) odpowiada za dostęp do fragmentu pamięci, gdzie znajduje się tablica users,
+drugi odpowiada za dostęp do fragmentu pamięci, gdzie znajduje się tablica groups.
+
+Każdy klient składa się z dwóch procesów. Jeden odpowiada tylko za przyjmowanie wiadomości przez kolejkę ipcGet oraz wyświetlanie ich, drugi komunikuje się z serwerem, przekazuje żądania, odbiera odpowiedzi i wyświetla komunikaty.
+
+Do komunikacji wykorzystywane są poniższe struktury:
+send_login oraz send_password - bliźniacze struktury służące do logowania, odpowiadające za przesyłanie odpowiednio loginu/hasła
+error - wysyła informację z serwera na temat wystąpienia błędu i jego typu, 0 to brak błędu
+sysMSG - wiadomość złożona, pozwala na przekazanie złożonych informacji z pomocą tablicy dwuwymiarowej oraz liczby
+text - struktura odpowiadająca send_login i send_password, ale tym razem przeznaczona konkretnie do przesyłania nazw grup lub użytkowników
+id - służy do przesyłania identyfikatorów
+msg - służy przesyłaniu wiadmości klient - serwer, a potem serwer-klient lub serwer-klienci
+clientRequest - struktura przekazująca żądanie klienta
+user - struktura użytkownika, zawierająca wszystkie charakteryzujące go parametry
+group - struktura grupy, zawierająca wszystkie charakteryzujące ją parametry

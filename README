@@ -1,0 +1,21 @@
+Kompilacja:
+Aby skompilować wystarczy wpisać "make" w konsoli. Wykorzystany zostanie plik Makefile. Uzyskane zostaną pliki wykonywalne serwer oraz klient.
+
+
+Serwer:
+Do poprawnego działania programu konieczne jest uruchomienie w konsoli pliku serwer (./serwer). Program wczyta dane dane z pliku konfiguracyjnego (configuration_file) i na jego podstawie utworzy użytkowników oraz grupy oraz kolejkę do logowania.
+Serwer zamyka się z wykorzystaniem Ctrl+c.
+Zadaniem tego programu jest odbieranie żądań użytkowników i realizowanie ich. Pozwala na logowanie i wylogowywanie, dołączanie do grup i wychodzenie z nich, pisanie wiadomości do użytkowników i grup,
+blokowanie użytkowników i grup, wyświetlanie grup, osób należących do grup i użytkowników aktywnych. Zapewnia odpowiednie weryfikacje, w celu sprawdzenia, czy wykonanie żądań jest możliwe. Przekazuje informacje pomiędzy różnymi Klientami.
+
+
+Klient
+Po uruchomieniu serwera można uruchomić programy klientów. Program umożliwia zalogowanie się jako jeden z użytkowników. Aby wyjść, należy wylogować się (wpisać 10), a następnie zamknąć program z użyciem Ctrl+c.
+Zadaniem programu jest obsługa klientów, w tym celu komunikuje się z serwerem. Przedstawia wyniki realizacji żądań przez serwer. Przekazuje informacje pomiędzy osobą fizyczną a serwerem.
+
+
+Struktury:
+Załączony jest również plik ze strukturami wykorzystywanymi przez program Serwer i program Klient.
+
+
+Szczegółowe informacje na temat komunikacji Klient-Serwer oraz ich procesów zawarte są w pliku PROTOCOL.
