@@ -16,6 +16,15 @@ typedef struct error{
     long mtype;
     int error; //0 - valid
 }error;
+typedef struct sysMSG{
+    long mtype;
+    char all[30][30];
+    int nr;
+}sysMSG;
+typedef struct text{
+    long mtype;
+    char name[30];
+}text;
 typedef struct id{
     long mtype;
     int id;
@@ -23,7 +32,9 @@ typedef struct id{
 typedef struct msg{
     long mtype;
     char receiver[30];
-    char msg[248];
+    int sender;
+    char msg[2048];
+    int groupORuser;
 }msg;
 typedef struct clientRequest{
     long mtype;
@@ -35,6 +46,9 @@ typedef struct user {
     int active;
     int id;
     int blocked[30];
+    int nrBlocked;
+    int blockedGroups[10];
+    int nrBlockedGroups;
     int loggingTries;
 } user;
 //temporary users in groups are static - u can implement sth or not
@@ -42,5 +56,6 @@ typedef struct group {
     int id;
     char name[30];
     int listOfUsers[25];
+    int  nrOfUsers;
 } group;
 #endif //WSPOLBIEZNE_STRUCTURES_// H
