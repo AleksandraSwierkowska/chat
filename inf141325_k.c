@@ -1,10 +1,8 @@
 //client
 #include <stdio.h>
-#include<sys/types.h>
 #include<sys/ipc.h>
 #include<sys/msg.h>
 #include<stdlib.h>
-#include<fcntl.h>
 #include<string.h>
 #include<unistd.h>
 #include <signal.h>
@@ -39,7 +37,7 @@ int main(){
 
                 printf("%s",
                        "\nCo chcesz zrobić teraz?\n 1 - napisz wiadomość do użytkownika \n 2 - napisz wiadomość do grupy \n 3 - wyświetl listę grup\n "
-                       "4 - wyświetl członków danej grupy \n 5 - wyświetl aktywnych użytkowników \n 6 - dołącz do grupy \n 7 - opuść grupę \n 8 - zablokuj użytkownika \n 9 - zablokuj grupę \n 10 - wyloguj się \n");
+                       "4 - wyświetl członków danej grupy \n 5 - wyświetl aktywnych użytkowników \n 6 - dołącz do grupy \n 7 - opuść grupę \n 8 - zablokuj użytkownika \n 9 - zablokuj grupę \n 10 - wyloguj się \n\n");
                 read(1, buf, 4);
                 fflush(stdin);
                 int counter = 0;
@@ -175,6 +173,8 @@ int main(){
                             printf("%s", "Użytkownik został zablokowany \n");
                         } else if (error1.error == 1) {
                             printf("%s", "Podany użytkownik nie istnieje \n");
+                        } else if (error1.error == 3){
+                            printf("%s", "Nie możesz zablokować samego siebie \n");
                         } else {
                             printf("%s", "Już zablokowałeś tego użytkownika \n");
                         }

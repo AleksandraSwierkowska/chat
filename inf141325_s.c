@@ -1,13 +1,11 @@
 //server
 #include <stdio.h>
-#include<sys/types.h>
 #include<sys/ipc.h>
 #include<sys/msg.h>
 #include<stdlib.h>
 #include<fcntl.h>
 #include<string.h>
 #include<unistd.h>
-#include <stddef.h>
 #include "structures.h"
 #include<sys/shm.h>
 #include<sys/sem.h>
@@ -253,8 +251,10 @@ int log_in(user *users, group *group, int n) {
     send_login get_login = {};
     send_password get_password = {};
     id send_id = {4};
+    int userNotLogged;
     int id = 0;
     while (1) {
+        userNotLogged = 1;
         msgrcv(ipc, &get_login, sizeof(send_login) - sizeof(long), 1, 0);
         printf("%s\n", get_login.login);
         for (int i = 0; i < n; i++) {
@@ -262,45 +262,48 @@ int log_in(user *users, group *group, int n) {
                 if (users[i].active == 1){
                     error error = {3, 4};
                     msgsnd(ipc, &error, sizeof(error) - sizeof(long), 0);
-                    continue;
+                    userNotLogged = 0;
+                    break;
                 }
                 else {
                     id = users[i].id;
                 }
             }
         }
-        if (id == 0) {
-            error error = {3, 1};
-            msgsnd(ipc, &error, sizeof(error) - sizeof(long), 0);
-            continue;
-        }
-        error error = {3, 0};
-        msgsnd(ipc, &error, sizeof(error) - sizeof(long), 0);
-        msgrcv(ipc, &get_password, sizeof(send_login) - sizeof(long), 2, 0);
-        printf("%s\n", get_password.password);
-        semop(susers, &sClose, 1);
-        if (users[id - 1].loggingTries > 1) {
-            error.error = 3;
-            msgsnd(ipc, &error, sizeof(error) - sizeof(long), 0);
-            semop(susers, &sOpen, 1);
-            continue;
-        } else {
-            if (strcmp(users[id - 1].password, get_password.password) == 0) {
-                users[id - 1].active = 1;
-                error.error = 0;
+        if(userNotLogged) {
+            if (id == 0) {
+                error error = {3, 1};
                 msgsnd(ipc, &error, sizeof(error) - sizeof(long), 0);
-                send_id.id = id;
-                msgsnd(ipc, &send_id, sizeof(send_id) - sizeof(long), 0);
-                semop(susers, &sOpen, 1);
-                break;
-            } else {
-                users[id - 1].loggingTries++;
-                error.error = 2;
-                msgsnd(ipc, &error, sizeof(error) - sizeof(long), 0);
-
+                continue;
             }
+            error error = {3, 0};
+            msgsnd(ipc, &error, sizeof(error) - sizeof(long), 0);
+            msgrcv(ipc, &get_password, sizeof(send_login) - sizeof(long), 2, 0);
+            printf("%s\n", get_password.password);
+            semop(susers, &sClose, 1);
+            if (users[id - 1].loggingTries > 1) {
+                error.error = 3;
+                msgsnd(ipc, &error, sizeof(error) - sizeof(long), 0);
+                semop(susers, &sOpen, 1);
+                continue;
+            } else {
+                if (strcmp(users[id - 1].password, get_password.password) == 0) {
+                    users[id - 1].active = 1;
+                    error.error = 0;
+                    msgsnd(ipc, &error, sizeof(error) - sizeof(long), 0);
+                    send_id.id = id;
+                    msgsnd(ipc, &send_id, sizeof(send_id) - sizeof(long), 0);
+                    semop(susers, &sOpen, 1);
+                    break;
+                } else {
+                    users[id - 1].loggingTries++;
+                    error.error = 2;
+                    msgsnd(ipc, &error, sizeof(error) - sizeof(long), 0);
+
+                }
+            }
+            semop(susers, &sOpen, 1);
         }
-        semop(susers, &sOpen, 1);
     }
     return id;
 }
@@ -506,6 +509,7 @@ void blockUser(user *users, int ipcMSG, int n) {
     error error1 = {3, 1};
     msgrcv(ipcMSG, &id1, sizeof(id1) - sizeof(long), 4, 0);
     msgrcv(ipcMSG, &text1, sizeof(text1) - sizeof(long), 8, 0);
+
     for (int i = 0; i < n; i++) {
         if (strcmp(users[i].login, text1.name) == 0) {
             idToBlock = users[i].id;
@@ -513,6 +517,13 @@ void blockUser(user *users, int ipcMSG, int n) {
             break;
         }
     }
+
+    if (id1.id == idToBlock){
+        error1.error = 3;
+        msgsnd(ipcMSG, &error1, sizeof(error1) - sizeof(long), 0);
+        return;
+    }
+
     semop(susers, &sClose, 1);
     for (int i = 0; i < n; i++) {
         if (users[i].id == id1.id) {
