@@ -215,6 +215,7 @@ int main(){
                 }
             }
         } else {
+            signal(SIGINT, SIG_DFL);
             while (1) {
                 msg msg1 = {};
                 msgrcv(ipcGet, &msg1, sizeof(msg1) - sizeof(long), 6, 0);
